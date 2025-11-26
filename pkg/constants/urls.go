@@ -1,6 +1,6 @@
 package pkg
 
 const (
-	URL_ROOT     = "/"
-	URL_INVOICES = "/invoices"
+	UrlRoot     = "/"
+	UrlInvoices = "/invoices"
 )

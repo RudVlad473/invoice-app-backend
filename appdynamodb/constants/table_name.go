@@ -1,4 +1,4 @@
-package dynamodb_client
+package appdynamodb
 
 const (
 	TableNameInvoices = "Invoices"
