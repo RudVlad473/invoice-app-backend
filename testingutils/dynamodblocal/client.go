@@ -56,10 +56,10 @@ type TableDef struct {
 var tableDefs = []TableDef{
 	{
 		Name:    dynamodbConstants.TableNameInvoices,
-		HashKey: "Id",
+		HashKey: "id",
 		Attributes: []types.AttributeDefinition{
 			{
-				AttributeName: aws.String("Id"),
+				AttributeName: aws.String("id"),
 				AttributeType: types.ScalarAttributeTypeS,
 			},
 		},
@@ -219,7 +219,7 @@ func getFakeInvoice() invoiceModels.Invoice {
 	clientAddress := gofakeit.Address()
 
 	return invoiceModels.Invoice{
-		Id:          gofakeit.UUID()[0:8],
+		Id:          gofakeit.UUID(),
 		CreatedAt:   now,
 		PaymentDue:  now.AddDate(0, 0, gofakeit.Number(3, 15)),
 		Description: gofakeit.ProductDescription(),

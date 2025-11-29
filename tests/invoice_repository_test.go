@@ -9,6 +9,7 @@ import (
 	"github.com/rudvlad473/invoice-app-backend/invoice"
 	invoiceModels "github.com/rudvlad473/invoice-app-backend/invoice/models"
 	"github.com/rudvlad473/invoice-app-backend/testingutils/dynamodblocal"
+	testing_utils "github.com/rudvlad473/invoice-app-backend/testingutils/fakes"
 )
 
 var appDynamodb = testingutils.NewAppDynamodb()
@@ -73,6 +74,26 @@ func TestFindById(t *testing.T) {
 		}
 		if !reflect.DeepEqual(emptyInvoice, invoiceModels.Invoice{}) {
 			t.Fatalf("returned invoice was not empty, %v", emptyInvoice)
+		}
+	})
+}
+
+func TestSave(t *testing.T) {
+	t.Run("should save invoice", func(t *testing.T) {
+		// arrange
+		Setup(t, false)
+		invoiceToSave := testing_utils.CreateSaveInvoiceDTO()
+
+		// act
+		savedInvoice, err := invoiceRepository.Save(ctx, invoiceToSave)
+
+		// assert
+		if err != nil {
+			t.Fatalf("couldn't save invoice \n %s", err)
+		}
+		// TODO: add tests for DTOs
+		if _, err = invoiceRepository.FindById(ctx, savedInvoice.Id); err != nil {
+			t.Fatalf("couldn't find the saved invoice \n %s", err)
 		}
 	})
 }
