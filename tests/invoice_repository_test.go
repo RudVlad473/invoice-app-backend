@@ -2,10 +2,13 @@ package tests
 
 import (
 	"context"
+	"encoding/json"
+	"fmt"
 	"reflect"
 	"testing"
 
 	"github.com/brianvoe/gofakeit/v6"
+	"github.com/fatih/structs"
 	"github.com/rudvlad473/invoice-app-backend/invoice"
 	invoiceModels "github.com/rudvlad473/invoice-app-backend/invoice/models"
 	"github.com/rudvlad473/invoice-app-backend/testingutils/dynamodblocal"
@@ -95,5 +98,124 @@ func TestSave(t *testing.T) {
 		if _, err = invoiceRepository.FindById(ctx, savedInvoice.Id); err != nil {
 			t.Fatalf("couldn't find the saved invoice \n %s", err)
 		}
+	})
+}
+
+func TestCountAll(t *testing.T) {
+	t.Run("should return TOTAL number of invoices in the table", func(t *testing.T) {
+		// arrange
+		invoices := Setup(t, true)
+
+		// act
+		amountOfInvoices, err := invoiceRepository.CountAll(ctx)
+
+		// assert
+		if err != nil {
+			t.Fatalf("couldn't count invoices \n %s", err)
+		}
+		if amountOfInvoices != len(invoices) {
+			t.Fatalf("invalid amount of invoices returned, actual amount: '%d', returned amount: '%d' \n %s", len(invoices), amountOfInvoices, err)
+		}
+	})
+}
+
+func TestDeleteById(t *testing.T) {
+	t.Run("should delete invoice by id", func(t *testing.T) {
+		// arrange
+		invoices := Setup(t, true)
+		invoiceIdToDelete := invoices[gofakeit.Number(0, len(invoices)-1)].Id
+
+		// act
+		err := invoiceRepository.DeleteById(ctx, invoiceIdToDelete)
+
+		// assert
+		if err != nil {
+			t.Fatalf("couldn't delete invoice \n %s", err)
+		}
+		if _, err = invoiceRepository.FindById(ctx, invoiceIdToDelete); err == nil {
+			t.Fatalf("invoice was still found after deletion, id: `%s` \n %s", invoiceIdToDelete, err)
+		}
+	})
+
+	t.Run("should NOT delete invoice by id when id doesn't exist", func(t *testing.T) {
+		// arrange
+		invoices := Setup(t, true)
+		randomInvoiceIdToDelete := gofakeit.UUID()
+
+		// act
+		err := invoiceRepository.DeleteById(ctx, randomInvoiceIdToDelete)
+
+		// assert
+		if err == nil {
+			t.Fatalf("deleted invoice when shouldn't have, id: `%s` \n %s", randomInvoiceIdToDelete, err)
+		}
+		if countAfterDeletion, err := invoiceRepository.CountAll(ctx); err != nil || countAfterDeletion != len(invoices) {
+			t.Fatalf("amount of invoices was changed after deletion, amount after deletion: `%d` \n %s", countAfterDeletion, err)
+		}
+	})
+}
+
+/*
+Here we assume that all passed dto's are correct
+Tests that validate DTOs should be written separately
+*/
+func TestUpdateById(t *testing.T) {
+	/*
+		We need this to iterate over all keys of DTO
+		to make sure update logic works as expected for all cases
+	*/
+	updateDtoKeyValueMap := structs.Map(testing_utils.CreateUpdateInvoiceDTO())
+	invoiceDtoKeyValueMap := structs.Map(updateDtoKeyValueMap)
+	for key := range invoiceDtoKeyValueMap {
+
+		t.Run(fmt.Sprintf("should partially update invoice (without updating items), key: '%s', value: '%+v'", key, updateDtoKeyValueMap[key]), func(t *testing.T) {
+			// arrange
+			invoices := Setup(t, true)
+			invoiceToUpdate := invoices[gofakeit.Number(0, len(invoices)-1)]
+
+			/*
+				Here we set 1 field that we want to update
+			*/
+			finalUpdateDto := invoiceModels.UpdateInvoiceDTO{}
+			jsonBytes, _ := json.Marshal(map[string]interface{}{
+				key: updateDtoKeyValueMap[key],
+			})
+			err := json.Unmarshal(jsonBytes, &finalUpdateDto)
+
+			if err != nil {
+				t.Fatalf("couldn't unmarshal updated invoice \n %s", err)
+			}
+
+			// act
+			updatedInvoice, err := invoiceRepository.UpdateById(ctx, invoiceToUpdate.Id, finalUpdateDto)
+
+			// assert
+			if err != nil {
+				t.Fatalf("couldn't update invoice \n %s", err)
+			}
+			if _, err = invoiceRepository.FindById(ctx, invoiceToUpdate.Id); err != nil {
+				t.Fatalf("couldn't find the updated invoice \n %s", err)
+			}
+			if reflect.DeepEqual(invoiceToUpdate, updatedInvoice) {
+				t.Fatalf("invoice stayed the same after update")
+			}
+			// field should be updated as expected
+			if !reflect.DeepEqual(structs.Map(updatedInvoice)[key], updateDtoKeyValueMap[key]) {
+				t.Fatalf("expected '%s' field to be equal to '%+v' value, instead was '%+v'", key, updateDtoKeyValueMap[key], structs.Map(updatedInvoice)[key])
+			}
+			for invoiceDtoKey := range invoiceDtoKeyValueMap {
+				if invoiceDtoKey == key {
+					continue
+				}
+
+				if !reflect.DeepEqual(structs.Map(updatedInvoice)[key], updateDtoKeyValueMap[key]) {
+					t.Fatalf("other fields of the entity SHOULD NOT be updated, instead saw '%s' field being updated from '%+v' to '%+v'", invoiceDtoKey, structs.Map(invoiceToUpdate)[invoiceDtoKey], structs.Map(updatedInvoice)[invoiceDtoKey])
+				}
+			}
+		})
+	}
+
+	t.Run("should update items of the invoice", func(t *testing.T) {
+
 	})
 }

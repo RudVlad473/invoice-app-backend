@@ -43,3 +43,19 @@ func CreateSaveInvoiceDTO() invoiceModels.SaveInvoiceDTO {
 		Items:         items,
 	}
 }
+
+// CreateUpdateInvoiceDTO /*
+/*
+	Doesn't populate items since it requires IDs of existing items,
+	add it separately if needed
+*/
+func CreateUpdateInvoiceDTO() invoiceModels.UpdateInvoiceDTO {
+	return invoiceModels.UpdateInvoiceDTO{
+		ClientAddress: CreateSaveAddressDTO(),
+		SenderAddress: CreateSaveAddressDTO(),
+		ClientEmail:   gofakeit.Email(),
+		ClientName:    gofakeit.Name(),
+		Description:   gofakeit.ProductDescription(),
+		PaymentDue:    time.Now().Add(24 * time.Hour * 7),
+	}
+}

@@ -160,9 +160,6 @@ func (appDynamodb *AppDynamodb) CleanupTables() error {
 		}
 	}
 
-	// Then call your own helper that recreates the tables with
-	// CreateTable(...) using your known schema.
-
 	return nil
 }
 
