@@ -38,10 +38,4 @@ type UpdateInvoiceDTO struct {
 	*/
 	SenderAddress *SaveAddressDTO `json:"senderAddress,omitempty" dynamodbav:"senderAddress,omitempty" validate:"required"`
 	ClientAddress *SaveAddressDTO `json:"clientAddress,omitempty" dynamodbav:"clientAddress,omitempty" validate:"required"`
-	/*
-		When passing this array, we should pass the desired state
-		i.e. if we currently have items '1, 2, 3' and we pass '1, 3' in here,
-		it would mean that we want to delete second item
-	*/
-	Items []string `json:"items,omitempty" dynamodbav:"items,omitempty" validate:"required,dive,uuid"`
 }

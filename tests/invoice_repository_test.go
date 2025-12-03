@@ -167,11 +167,6 @@ func TestUpdateById(t *testing.T) {
 	*/
 	updateDtoKeyValueMap := structs.Map(testing_utils.CreateUpdateInvoiceDTO())
 	for key := range updateDtoKeyValueMap {
-		// should be tested separately
-		if key == "Items" {
-			continue
-		}
-
 		t.Run(fmt.Sprintf("should partially update invoice (without updating items), key: '%s', value: '%+v'", key, updateDtoKeyValueMap[key]), func(t *testing.T) {
 			// arrange
 			invoices := Setup(t, true)
@@ -219,25 +214,4 @@ func TestUpdateById(t *testing.T) {
 			}
 		})
 	}
-
-}
-
-func TestUpdateByIdWithItems(t *testing.T) {
-	updateDtoKeyValueMap := testing_utils.CreateUpdateInvoiceDTO()
-
-	for key := range []struct {
-		name                string
-		idsToDelete         []string
-		expectedIdsToRemain []string
-	}{{name: "deleting a single item", idsToDelete: []string{"Items"}, expectedIdsToRemain: []string{"Items"}}} {
-		t.Run("should update items of the invoice when", func(t *testing.T) {
-			// arrange
-			invoices := Setup(t, true)
-
-			// act
-
-			// assert
-		})
-	}
-
 }
