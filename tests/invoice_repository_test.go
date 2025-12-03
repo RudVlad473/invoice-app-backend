@@ -9,6 +9,7 @@ import (
 
 	"github.com/brianvoe/gofakeit/v6"
 	"github.com/fatih/structs"
+	"github.com/google/go-cmp/cmp"
 	"github.com/rudvlad473/invoice-app-backend/invoice"
 	invoiceModels "github.com/rudvlad473/invoice-app-backend/invoice/models"
 	"github.com/rudvlad473/invoice-app-backend/testingutils/dynamodblocal"
@@ -165,8 +166,11 @@ func TestUpdateById(t *testing.T) {
 		to make sure update logic works as expected for all cases
 	*/
 	updateDtoKeyValueMap := structs.Map(testing_utils.CreateUpdateInvoiceDTO())
-	invoiceDtoKeyValueMap := structs.Map(updateDtoKeyValueMap)
-	for key := range invoiceDtoKeyValueMap {
+	for key := range updateDtoKeyValueMap {
+		// should be tested separately
+		if key == "Items" {
+			continue
+		}
 
 		t.Run(fmt.Sprintf("should partially update invoice (without updating items), key: '%s', value: '%+v'", key, updateDtoKeyValueMap[key]), func(t *testing.T) {
 			// arrange
@@ -196,26 +200,44 @@ func TestUpdateById(t *testing.T) {
 			if _, err = invoiceRepository.FindById(ctx, invoiceToUpdate.Id); err != nil {
 				t.Fatalf("couldn't find the updated invoice \n %s", err)
 			}
-			if reflect.DeepEqual(invoiceToUpdate, updatedInvoice) {
+			// cmp is a better alternative to reflect.DeepEqual
+			if cmp.Equal(invoiceToUpdate, updatedInvoice) {
 				t.Fatalf("invoice stayed the same after update")
 			}
 			// field should be updated as expected
-			if !reflect.DeepEqual(structs.Map(updatedInvoice)[key], updateDtoKeyValueMap[key]) {
+			if !cmp.Equal(structs.Map(updatedInvoice)[key], updateDtoKeyValueMap[key]) {
 				t.Fatalf("expected '%s' field to be equal to '%+v' value, instead was '%+v'", key, updateDtoKeyValueMap[key], structs.Map(updatedInvoice)[key])
 			}
-			for invoiceDtoKey := range invoiceDtoKeyValueMap {
+			for invoiceDtoKey := range updateDtoKeyValueMap {
 				if invoiceDtoKey == key {
 					continue
 				}
 
-				if !reflect.DeepEqual(structs.Map(updatedInvoice)[key], updateDtoKeyValueMap[key]) {
+				if !cmp.Equal(structs.Map(updatedInvoice)[key], updateDtoKeyValueMap[key]) {
 					t.Fatalf("other fields of the entity SHOULD NOT be updated, instead saw '%s' field being updated from '%+v' to '%+v'", invoiceDtoKey, structs.Map(invoiceToUpdate)[invoiceDtoKey], structs.Map(updatedInvoice)[invoiceDtoKey])
 				}
 			}
 		})
 	}
 
-	t.Run("should update items of the invoice", func(t *testing.T) {
+}
 
-	})
+func TestUpdateByIdWithItems(t *testing.T) {
+	updateDtoKeyValueMap := testing_utils.CreateUpdateInvoiceDTO()
+
+	for key := range []struct {
+		name                string
+		idsToDelete         []string
+		expectedIdsToRemain []string
+	}{{name: "deleting a single item", idsToDelete: []string{"Items"}, expectedIdsToRemain: []string{"Items"}}} {
+		t.Run("should update items of the invoice when", func(t *testing.T) {
+			// arrange
+			invoices := Setup(t, true)
+
+			// act
+
+			// assert
+		})
+	}
+
 }

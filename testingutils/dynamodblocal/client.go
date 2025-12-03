@@ -202,7 +202,8 @@ func getFakeInvoice() invoiceModels.Invoice {
 	now := time.Now().UTC()
 
 	var items []invoiceModels.Item
-	for i := 0; i < gofakeit.Number(1, 10); i++ {
+	amountOfItems := gofakeit.Number(1, 10)
+	for i := 0; i < amountOfItems; i++ {
 		items = append(items, getFakeItem())
 	}
 

@@ -161,14 +161,13 @@ func (r *Repository) UpdateById(ctx context.Context, id string, invoice invoiceM
 		ExpressionAttributeValues: expr.Values(),
 	}
 
-	item, err := r.dynamodbClient.UpdateItem(ctx, input)
+	_, err = r.dynamodbClient.UpdateItem(ctx, input)
 
-	if err != nil || item == nil {
+	if err != nil {
 		return invoiceModels.Invoice{}, err
 	}
 
-	var updatedInvoice invoiceModels.Invoice
-	err = attributevalue.UnmarshalMap(item.Attributes, &updatedInvoice)
+	updatedInvoice, err := r.FindById(ctx, id)
 
 	if err != nil {
 		return invoiceModels.Invoice{}, err

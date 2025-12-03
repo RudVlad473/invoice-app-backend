@@ -33,9 +33,12 @@ func CreateSaveInvoiceDTO() invoiceModels.SaveInvoiceDTO {
 		items = append(items, CreateSaveItemDTO())
 	}
 
+	clientAddress := CreateSaveAddressDTO()
+	senderAddress := CreateSaveAddressDTO()
+
 	return invoiceModels.SaveInvoiceDTO{
-		ClientAddress: CreateSaveAddressDTO(),
-		SenderAddress: CreateSaveAddressDTO(),
+		ClientAddress: &clientAddress,
+		SenderAddress: &senderAddress,
 		ClientEmail:   gofakeit.Email(),
 		ClientName:    gofakeit.Name(),
 		Description:   gofakeit.ProductDescription(),
@@ -50,9 +53,12 @@ func CreateSaveInvoiceDTO() invoiceModels.SaveInvoiceDTO {
 	add it separately if needed
 */
 func CreateUpdateInvoiceDTO() invoiceModels.UpdateInvoiceDTO {
+	clientAddress := CreateSaveAddressDTO()
+	senderAddress := CreateSaveAddressDTO()
+
 	return invoiceModels.UpdateInvoiceDTO{
-		ClientAddress: CreateSaveAddressDTO(),
-		SenderAddress: CreateSaveAddressDTO(),
+		ClientAddress: &clientAddress,
+		SenderAddress: &senderAddress,
 		ClientEmail:   gofakeit.Email(),
 		ClientName:    gofakeit.Name(),
 		Description:   gofakeit.ProductDescription(),
