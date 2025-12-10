@@ -9,6 +9,7 @@ import (
 
 func CreateSaveItemDTO() invoiceModels.SaveItemDTO {
 	return invoiceModels.SaveItemDTO{
+		Id:       gofakeit.UUID(),
 		Name:     gofakeit.ProductName(),
 		Price:    gofakeit.Price(1.0, 1000.0),
 		Quantity: gofakeit.Number(10, 20),

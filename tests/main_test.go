@@ -10,7 +10,7 @@ import (
 
 func TestMain(m *testing.M) {
 	ctx := context.Background()
-	appDynamodb := testingutils.NewAppDynamodb()
+	appDynamodb := testingutils.NewTestDynamodbClient()
 	initializeDynamoDBLocalCommand := testingutils.NewInitializeDynamoDBLocalCommand(ctx, appDynamodb)
 
 	initializeDynamoDBLocalCommand.Execute()

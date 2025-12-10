@@ -14,6 +14,7 @@ type Address struct {
 }
 
 type Item struct {
+	Id       string  `json:"id" dynamodbav:"id"`
 	Name     string  `json:"name" dynamodbav:"name"`
 	Quantity int     `json:"quantity" dynamodbav:"quantity"`
 	Price    float64 `json:"price" dynamodbav:"price"`

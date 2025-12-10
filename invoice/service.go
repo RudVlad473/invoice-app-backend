@@ -3,6 +3,7 @@ package invoice
 import (
 	"context"
 	"fmt"
+	"slices"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/feature/dynamodb/attributevalue"
@@ -10,6 +11,7 @@ import (
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb"
 	"github.com/aws/aws-sdk-go-v2/service/dynamodb/types"
 	"github.com/google/uuid"
+	"github.com/mitchellh/mapstructure"
 	dynamodb_client "github.com/rudvlad473/invoice-app-backend/appdynamodb/constants"
 	invoiceModels "github.com/rudvlad473/invoice-app-backend/invoice/models"
 )
@@ -123,7 +125,18 @@ func (r *Repository) CountAll(ctx context.Context) (int, error) {
 }
 
 func (r *Repository) UpdateById(ctx context.Context, id string, invoice invoiceModels.UpdateInvoiceDTO) (invoiceModels.Invoice, error) {
-	_, err := r.FindById(ctx, id)
+	return r.updateById(ctx, id, invoice)
+}
+
+/*
+You're supposed to pass a partial invoice here (or a full one) with all the fields you want updated
+So don't pass fields that you haven't updated, because it'll cause a dry update
+Sidenote:I spent HOURS trying to understand how to make it type-safe instead of putting `any` here
+There isn't a way to do that in Go at the moment of writing of this function
+It could potentially be moved to a reusable dynamodb client for reusability
+*/
+func (r *Repository) updateById(ctx context.Context, id string, invoice any) (updatedInvoice invoiceModels.Invoice, err error) {
+	_, err = r.FindById(ctx, id)
 
 	if err != nil {
 		return invoiceModels.Invoice{}, err
@@ -167,11 +180,66 @@ func (r *Repository) UpdateById(ctx context.Context, id string, invoice invoiceM
 		return invoiceModels.Invoice{}, err
 	}
 
-	updatedInvoice, err := r.FindById(ctx, id)
+	updatedInvoice, err = r.FindById(ctx, id)
 
 	if err != nil {
 		return invoiceModels.Invoice{}, err
 	}
 
 	return updatedInvoice, nil
+}
+
+func (r *Repository) AddItemByInvoiceId(ctx context.Context, invoiceId string, item invoiceModels.SaveItemDTO) (updatedInvoice invoiceModels.Invoice, err error) {
+	invoice, err := r.FindById(ctx, invoiceId)
+
+	if err != nil {
+		return invoiceModels.Invoice{}, err
+	}
+
+	itemToAppend := invoiceModels.Item{}
+	/*
+		This logic allows us to 'merge' (js-style) two structure,
+		so we don't have to map out all fields manually
+		In js, it would be a simple `const itemToAppend = {...item}`
+		But golang doesn't have a similar spread functionality
+	*/
+	err = mapstructure.Decode(item, &itemToAppend)
+
+	if err != nil {
+		return invoiceModels.Invoice{}, err
+	}
+
+	/*
+		We only pass `Items` here because we don't want any other fields updated
+		When updating the items here, we basically replace old items with the new ones, adding an item at the end
+		This is not the most efficient solution, but should work smoothly for small amount of data
+		(and the data is expected to be small)
+	*/
+	return r.updateById(ctx, invoiceId, invoiceModels.UpdateInvoiceItemDTO{
+		Items: append(invoice.Items, itemToAppend),
+	})
+}
+
+func (r *Repository) RemoveItemByInvoiceId(ctx context.Context, invoiceId string, itemId string) (updatedInvoice invoiceModels.Invoice, err error) {
+	invoice, err := r.FindById(ctx, invoiceId)
+
+	if err != nil {
+		return invoiceModels.Invoice{}, err
+	}
+
+	indexOfItemToDelete := slices.IndexFunc(invoice.Items, func(item invoiceModels.Item) bool { return item.Id == itemId })
+
+	if indexOfItemToDelete == -1 {
+		return invoiceModels.Invoice{}, fmt.Errorf("item with id '%s' not found", itemId)
+	}
+
+	items := slices.Delete(invoice.Items, indexOfItemToDelete, indexOfItemToDelete+1)
+
+	return r.updateById(ctx, invoiceId, invoiceModels.UpdateInvoiceItemDTO{
+		/*
+			2nd parameter is starting index to delete from, 3rd - ending index
+			Example: slices.Delete([1,2,3], 1, 2) => [1,3]
+		*/
+		Items: items,
+	})
 }

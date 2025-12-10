@@ -20,11 +20,11 @@ import (
 	testing_utils "github.com/rudvlad473/invoice-app-backend/testingutils/dynamodblocal/constants"
 )
 
-type AppDynamodb struct {
+type TestDynamodbClient struct {
 	DynamodbClient *dynamodb.Client
 }
 
-func NewAppDynamodb() *AppDynamodb {
+func NewTestDynamodbClient() *TestDynamodbClient {
 	ctx := context.Background()
 
 	cfg, err := config.LoadDefaultConfig(
@@ -43,7 +43,7 @@ func NewAppDynamodb() *AppDynamodb {
 
 	dynamodbClient := dynamodb.NewFromConfig(cfg)
 
-	return &AppDynamodb{DynamodbClient: dynamodbClient}
+	return &TestDynamodbClient{DynamodbClient: dynamodbClient}
 }
 
 type TableDef struct {
@@ -68,7 +68,7 @@ var tableDefs = []TableDef{
 
 // SetupTables
 // /* FOR TESTS ONLY */
-func (appDynamodb *AppDynamodb) SetupTables() error {
+func (appDynamodb *TestDynamodbClient) SetupTables() error {
 	ctx := context.Background()
 
 	for _, tableDef := range tableDefs {
@@ -143,7 +143,7 @@ func waitUntilTableActive(dynamoClient *dynamodb.Client, ctx context.Context, ta
 
 // CleanupTables
 // /* FOR TESTS ONLY */
-func (appDynamodb *AppDynamodb) CleanupTables() error {
+func (appDynamodb *TestDynamodbClient) CleanupTables() error {
 	ctx := context.Background()
 
 	out, err := appDynamodb.DynamodbClient.ListTables(ctx, &dynamodb.ListTablesInput{})
@@ -165,7 +165,7 @@ func (appDynamodb *AppDynamodb) CleanupTables() error {
 
 // PopulateTables
 // /* FOR TESTS ONLY */
-func (appDynamodb *AppDynamodb) PopulateTables(shouldPopulateInvoices bool) ([]invoiceModels.Invoice, error) {
+func (appDynamodb *TestDynamodbClient) PopulateTables(shouldPopulateInvoices bool) ([]invoiceModels.Invoice, error) {
 	ctx := context.Background()
 
 	invoiceCount := 20
@@ -176,7 +176,7 @@ func (appDynamodb *AppDynamodb) PopulateTables(shouldPopulateInvoices bool) ([]i
 	var invoices []invoiceModels.Invoice
 
 	for i := 0; i < invoiceCount; i++ {
-		invoice := getFakeInvoice()
+		invoice := GetFakeInvoice()
 		invoices = append(invoices, invoice)
 
 		av, err := attributevalue.MarshalMap(invoice)
@@ -198,13 +198,13 @@ func (appDynamodb *AppDynamodb) PopulateTables(shouldPopulateInvoices bool) ([]i
 	return invoices, nil
 }
 
-func getFakeInvoice() invoiceModels.Invoice {
+func GetFakeInvoice() invoiceModels.Invoice {
 	now := time.Now().UTC()
 
 	var items []invoiceModels.Item
 	amountOfItems := gofakeit.Number(1, 10)
 	for i := 0; i < amountOfItems; i++ {
-		items = append(items, getFakeItem())
+		items = append(items, GetFakeItem())
 	}
 
 	statuses := []invoiceConstants.Status{
@@ -240,8 +240,9 @@ func getFakeInvoice() invoiceModels.Invoice {
 	}
 }
 
-func getFakeItem() invoiceModels.Item {
+func GetFakeItem() invoiceModels.Item {
 	return invoiceModels.Item{
+		Id:       gofakeit.UUID(),
 		Name:     gofakeit.ProductName(),
 		Quantity: gofakeit.Number(1, 35),
 		Price:    gofakeit.Price(0.25, 1000.0),

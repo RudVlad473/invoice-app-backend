@@ -9,10 +9,10 @@ import (
 type InitializeDynamodbLocalCommand struct {
 	setupDocker *SetupDynamodbLocalDockerCommand
 	ctx         context.Context
-	appDynamodb *AppDynamodb
+	appDynamodb *TestDynamodbClient
 }
 
-func NewInitializeDynamoDBLocalCommand(ctx context.Context, appDynamodb *AppDynamodb) *InitializeDynamodbLocalCommand {
+func NewInitializeDynamoDBLocalCommand(ctx context.Context, appDynamodb *TestDynamodbClient) *InitializeDynamodbLocalCommand {
 	return &InitializeDynamodbLocalCommand{
 		setupDocker: &SetupDynamodbLocalDockerCommand{},
 		ctx:         ctx,

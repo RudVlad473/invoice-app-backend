@@ -8,6 +8,8 @@ import (
 	dynamodb_local "github.com/rudvlad473/invoice-app-backend/testingutils/dynamodblocal/constants"
 )
 
+// SetupDynamodbLocalDockerCommand
+// *Should've probably used official docker api for go for this*/
 type SetupDynamodbLocalDockerCommand struct{}
 
 func (c *SetupDynamodbLocalDockerCommand) Execute() {
@@ -38,5 +40,9 @@ func (c *SetupDynamodbLocalDockerCommand) Execute() {
 }
 
 func (c *SetupDynamodbLocalDockerCommand) Undo() {
-	_ = exec.Command("docker", "stop", "appdynamodb-local-test").Run()
+	cmd := exec.Command("docker", "stop", dynamodb_local.DockerContainerName)
+
+	if _, err := cmd.CombinedOutput(); err != nil {
+		log.Fatalf("failed to pause local DynamoDB container: %v", err)
+	}
 }
