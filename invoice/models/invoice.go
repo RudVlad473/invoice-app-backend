@@ -13,11 +13,17 @@ type Address struct {
 	Country  string `json:"country" dynamodbav:"country"`
 }
 
+// BaseItem
+// /*Should act as baseline for dtos & entities (what we put in db)*/
+type BaseItem struct {
+	Name     string  `json:"name,omitempty" dynamodbav:"name,omitempty" validate:"required,min=1,max=100"`
+	Quantity int     `json:"quantity,omitempty" dynamodbav:"quantity,omitempty" validate:"required,min=1"`
+	Price    float64 `json:"price,omitempty" dynamodbav:"price,omitempty" validate:"required,gt=0"`
+}
+
 type Item struct {
-	Id       string  `json:"id" dynamodbav:"id"`
-	Name     string  `json:"name" dynamodbav:"name"`
-	Quantity int     `json:"quantity" dynamodbav:"quantity"`
-	Price    float64 `json:"price" dynamodbav:"price"`
+	Id string `json:"id,omitempty" dynamodbav:"id,omitempty" validate:"required,uuid"`
+	BaseItem
 }
 
 type Invoice struct {

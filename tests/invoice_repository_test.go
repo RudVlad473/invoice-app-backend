@@ -183,6 +183,7 @@ func TestDeleteById(t *testing.T) {
 /*
 Here we assume that all passed dto's are correct
 Tests that validate DTOs should be written separately
+(and live near the files that declare them)
 */
 func TestUpdateById(t *testing.T) {
 	/*
@@ -363,6 +364,85 @@ func TestRemoveItemByInvoiceId(t *testing.T) {
 		}
 		if len(invoiceToRemoveItemFrom.Items) != len(updatedInvoice.Items) {
 			t.Fatalf("item was removed when it shouldn't have been \n %s", err)
+		}
+	})
+}
+
+func TestUpdateItemByInvoiceId(t *testing.T) {
+	t.Run("should update item of an existing invoice", func(t *testing.T) {
+		// arrange
+		invoices := Setup(t, true)
+		randomInvoice := invoices[gofakeit.Number(0, len(invoices)-1)]
+		itemIndexToUpdate := gofakeit.Number(0, len(randomInvoice.Items)-1)
+		itemToUpdate := randomInvoice.Items[itemIndexToUpdate]
+
+		itemPayload := invoiceModels.UpdateItemDTO{}
+		err := mapstructure.Decode(testingutils.GetFakeItem(), &itemPayload)
+
+		if err != nil {
+			t.Fatalf("couldn't decode \n %s", err)
+		}
+
+		// act
+		updatedInvoice, err := invoiceRepository.UpdateItemByInvoiceId(ctx, randomInvoice.Id, itemToUpdate.Id, itemPayload)
+
+		// assert
+		if err != nil {
+			t.Fatalf("couldn't add item to invoice \n %s", err)
+		}
+
+		if cmp.Equal(updatedInvoice, randomInvoice) {
+			t.Fatalf("invoice wasn't changed after presumed update \n %s", err)
+		}
+		if len(randomInvoice.Items) != len(updatedInvoice.Items) {
+			t.Fatalf("item was removed when it shouldn't have been \n %s", err)
+		}
+
+		itemAfterUpdate := updatedInvoice.Items[itemIndexToUpdate]
+		/*
+			Check if all fields were updated to the ones in the dto as a part of update beside id
+		*/
+		if !cmp.Equal(itemPayload.BaseItem, itemAfterUpdate.BaseItem) {
+			t.Fatalf("invoice was not updated after presumed update \n %s", err)
+		}
+		/*
+			We need to additionally verify that no other fields were updated as a part of this operation, only Items
+			Make sure this is last assertion in the test, since it mutates initial structs
+		*/
+		updatedInvoice.Items = nil
+		randomInvoice.Items = nil
+		if !cmp.Equal(randomInvoice, updatedInvoice) {
+			t.Fatalf("some other fields were also updated as a part of 'add' function, %+v", cmp.Diff(randomInvoice,
+				updatedInvoice))
+		}
+	})
+
+	t.Run("should NOT update item that doesn't exist", func(t *testing.T) {
+		// arrange
+		invoices := Setup(t, true)
+		randomInvoice := invoices[gofakeit.Number(0, len(invoices)-1)]
+
+		itemPayload := invoiceModels.UpdateItemDTO{}
+		err := mapstructure.Decode(testingutils.GetFakeItem(), &itemPayload)
+
+		if err != nil {
+			t.Fatalf("couldn't decode \n %s", err)
+		}
+
+		// act
+		_, err = invoiceRepository.UpdateItemByInvoiceId(ctx, randomInvoice.Id, gofakeit.UUID(), itemPayload)
+
+		// assert
+		if err == nil {
+			t.Fatalf("item was updated when shouldn't have \n %s", err)
+		}
+
+		invoiceAfterUpdate, err := invoiceRepository.FindById(ctx, randomInvoice.Id)
+		if err != nil {
+			t.Fatalf("invoice wasn't found after updating its item \n %s", err)
+		}
+		if !cmp.Equal(invoiceAfterUpdate, randomInvoice) {
+			t.Fatalf("invoice was different after update when shouldn't have \n %s", err)
 		}
 	})
 }

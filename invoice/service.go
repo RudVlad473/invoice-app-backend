@@ -243,3 +243,29 @@ func (r *Repository) RemoveItemByInvoiceId(ctx context.Context, invoiceId string
 		Items: items,
 	})
 }
+
+func (r *Repository) UpdateItemByInvoiceId(ctx context.Context, invoiceId string,
+	itemId string, item invoiceModels.UpdateItemDTO) (updatedInvoice invoiceModels.Invoice, err error) {
+	invoice, err := r.FindById(ctx, invoiceId)
+
+	if err != nil {
+		return invoiceModels.Invoice{}, err
+	}
+
+	itemToUpdateIndex := slices.IndexFunc(invoice.Items, func(item invoiceModels.Item) bool { return item.Id == itemId })
+
+	if itemToUpdateIndex == -1 {
+		return invoiceModels.Invoice{}, fmt.Errorf("item with id '%s' not found", itemId)
+	}
+
+	/*Overriding existing item with passed dto*/
+	err = mapstructure.Decode(item, &invoice.Items[itemToUpdateIndex])
+
+	if err != nil {
+		return invoiceModels.Invoice{}, err
+	}
+
+	return r.updateById(ctx, invoiceId, invoiceModels.UpdateInvoiceItemDTO{
+		Items: invoice.Items,
+	})
+}

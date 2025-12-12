@@ -202,6 +202,7 @@ func GetFakeInvoice() invoiceModels.Invoice {
 	now := time.Now().UTC()
 
 	var items []invoiceModels.Item
+	/*In the tests we work off of assumption that EVERY invoice has AT LEAST 1 item*/
 	amountOfItems := gofakeit.Number(1, 10)
 	for i := 0; i < amountOfItems; i++ {
 		items = append(items, GetFakeItem())
@@ -242,9 +243,11 @@ func GetFakeInvoice() invoiceModels.Invoice {
 
 func GetFakeItem() invoiceModels.Item {
 	return invoiceModels.Item{
-		Id:       gofakeit.UUID(),
-		Name:     gofakeit.ProductName(),
-		Quantity: gofakeit.Number(1, 35),
-		Price:    gofakeit.Price(0.25, 1000.0),
+		Id: gofakeit.UUID(),
+		BaseItem: invoiceModels.BaseItem{
+			Name:     gofakeit.ProductName(),
+			Quantity: gofakeit.Number(1, 35),
+			Price:    gofakeit.Price(0.25, 1000.0),
+		},
 	}
 }
