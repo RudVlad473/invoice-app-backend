@@ -7,3 +7,5 @@ const (
 	StatusPaid    Status = "PAID"
 	StatusDraft   Status = "DRAFT"
 )
+
+var Statuses = []Status{StatusPending, StatusPaid, StatusDraft}

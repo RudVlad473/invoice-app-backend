@@ -36,11 +36,16 @@ func main() {
 
 	var validate = validator.New()
 
-	validate.RegisterValidation("invoice_status", func(fl validator.FieldLevel) bool {
+	err = validate.RegisterValidation("status", func(fl validator.FieldLevel) bool {
 		status := fl.Field().Interface().(invoiceConstants.Status)
 
-		return slices.Contains([]invoiceConstants.Status{invoiceConstants.StatusDraft, invoiceConstants.StatusPending, invoiceConstants.StatusPaid}, status)
+		return slices.Contains(invoiceConstants.Statuses, status)
 	})
+
+	if err != nil {
+		log.Fatalf("unable to register validator: %v", err)
+	}
+
 	/**/
 
 	/* Repositories */
@@ -55,5 +60,9 @@ func main() {
 	http.Handle(pkg.UrlInvoices, invoice.NewHandler())
 	/**/
 
-	http.ListenAndServe(":8080", nil)
+	err = http.ListenAndServe(":8080", nil)
+
+	if err != nil {
+		log.Fatalf("unable to start server: %v", err)
+	}
 }

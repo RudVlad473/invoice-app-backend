@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/brianvoe/gofakeit/v6"
+	invoiceConstants "github.com/rudvlad473/invoice-app-backend/invoice/constants"
 	invoiceModels "github.com/rudvlad473/invoice-app-backend/invoice/models"
 )
 
@@ -68,5 +69,6 @@ func CreateUpdateInvoiceDTO() invoiceModels.UpdateInvoiceDTO {
 		ClientName:    gofakeit.Name(),
 		Description:   gofakeit.ProductDescription(),
 		PaymentDue:    time.Now().Add(24 * time.Hour * 7),
+		Status:        invoiceConstants.Statuses[gofakeit.Number(0, len(invoiceConstants.Statuses)-1)],
 	}
 }

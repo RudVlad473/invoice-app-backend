@@ -2,6 +2,8 @@ package invoice
 
 import (
 	"time"
+
+	invoice "github.com/rudvlad473/invoice-app-backend/invoice/constants"
 )
 
 type SaveAddressDTO struct {
@@ -22,16 +24,17 @@ type SaveInvoiceDTO struct {
 }
 
 type UpdateInvoiceDTO struct {
-	PaymentDue  time.Time `json:"paymentDue,omitempty" dynamodbav:"paymentDue,omitempty" validate:"required"`
-	Description string    `json:"description,omitempty" dynamodbav:"description,omitempty" validate:"required,min=1,max=500"`
-	ClientName  string    `json:"clientName,omitempty" dynamodbav:"clientName,omitempty" validate:"required,min=1,max=100"`
-	ClientEmail string    `json:"clientEmail,omitempty" dynamodbav:"clientEmail,omitempty" validate:"required,email"`
+	PaymentDue  time.Time      `json:"paymentDue,omitempty" dynamodbav:"paymentDue,omitempty" validate:""`
+	Description string         `json:"description,omitempty" dynamodbav:"description,omitempty" validate:"min=1,max=500"`
+	ClientName  string         `json:"clientName,omitempty" dynamodbav:"clientName,omitempty" validate:"min=1,max=100"`
+	ClientEmail string         `json:"clientEmail,omitempty" dynamodbav:"clientEmail,omitempty" validate:"email"`
+	Status      invoice.Status `json:"status,omitempty" dynamodbav:"status,omitempty" validate:"status"`
 	/*
 		We need to have these as pointers so we can automatically omit nil values
 		Auto-omit logic doesn't work as great with non-pointer structs
 	*/
-	SenderAddress *SaveAddressDTO `json:"senderAddress,omitempty" dynamodbav:"senderAddress,omitempty" validate:"required"`
-	ClientAddress *SaveAddressDTO `json:"clientAddress,omitempty" dynamodbav:"clientAddress,omitempty" validate:"required"`
+	SenderAddress *SaveAddressDTO `json:"senderAddress,omitempty" dynamodbav:"senderAddress,omitempty" validate:""`
+	ClientAddress *SaveAddressDTO `json:"clientAddress,omitempty" dynamodbav:"clientAddress,omitempty" validate:""`
 }
 
 type UpdateInvoiceItemDTO struct {
